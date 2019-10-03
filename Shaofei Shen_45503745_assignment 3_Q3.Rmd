@@ -1,0 +1,264 @@
+---
+title: "Shaofei Shen_45503745_assignment 3_Q3"
+author: "Shaofei Shen"
+date: "2019/10/3"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Q3
+#### output from Q2(a) useful for Q3
+```{r}
+x_2<-c()
+x_2<-c(30:39)
+qd<-c()
+qd[30:39]<-c(0.00043,.00042,.00041,.00040,.00041,.00042,.00043,.00045,.00049,.00053)
+qw<-c()
+qw[30:39]<-c(0.25,0.2,0.175,0.150,0.150,0.150,0.150,0.150,0.150,1)
+aqx.d<-c()
+aqx.d[30:39]<-qd[30:39]*(1-0.5*qw[30:39])
+aqx.w<-c()
+aqx.w[30:39]<-qw[30:39]*(1-0.5*qd[30:39])
+al.x<-c()
+ad.x.d<-c()
+ad.x.w<-c()
+al.x[30]<-100000
+for (j in 30:40) {
+  ad.x.d[j]<-al.x[j]*aqx.d[j]
+  ad.x.w[j]<-al.x[j]*aqx.w[j]
+  al.x[j+1]<-al.x[j]-ad.x.d[j]-ad.x.w[j]
+}
+prems<-c()
+prems[30:39]<-c(rep(5000,10))
+pbf<-c()
+pbf[30:39]<-c(prems[30]*0.45,prems[31:39]*0.01)
+bsm<-c()
+bsm[30:39]<-c(0.005*prems[30]*(1-0.45),0.005*prems[31:39]*(1-0.01))
+IP<-c()
+IP[30:39]<-prems[30:39]-pbf[30:39]-bsm[30:39]
+i<-0.1;m<-0.003
+VU<-c()
+for (j in 30:39) {
+  VU[30]<-IP[30]*(1+i)*(1-m)
+  VU[j]<-(VU[j-1]+IP[j])*(1+i)*(1-m)
+}
+EIP.u<-c()
+EIP.u[30:39]<-IP[30:39]*al.x[30:39]/al.x[30]
+EVU.u<-c()
+EVU.u[30:39]<-VU[30:39]*al.x[31:40]/al.x[30]
+int.u<-c()
+int.u[30:39]<-c(i*EIP.u[30],i*(EVU.u[30:38]+EIP.u[31:39]))
+Tmsfr.u<-c()
+for (j in 30:39) {
+  Tmsfr.u[30]<-EIP.u[30]+int.u[30]-EVU.u[30]
+  Tmsfr.u[j]<-EVU.u[j-1]+EIP.u[j]+int.u[j]-EVU.u[j]
+}
+t<-c(1:10)
+exp<-c()
+exp[30:39]<-c(prems[30]*0.45+58,58*1.2^(t[2:10]-1))
+dsbft<-c()
+dsbft[30:39]<-VU[30:39]
+Epbf.nu<-c()
+Epbf.nu[30:39]<-pbf[30:39]*al.x[30:39]/al.x[30]
+Ebsm.nu<-c()
+Ebsm.nu[30:39]<-bsm[30:39]*al.x[30:39]/al.x[30]
+Eexp.nu<-c()
+Eexp.nu[30:39]<-exp[30:39]*al.x[30:39]/al.x[30]
+Edbft.nu<-c()
+Edbft.nu[30:39]<-dsbft[30:39]*ad.x.d[30:39]/al.x[30]
+Esbft.nu<-c()
+Esbft.nu[30:39]<-dsbft[30:39]*ad.x.w[30:39]/al.x[30]
+i.nu<-0.08
+int.nu<-c()
+int.nu[30:39]<-i.nu*(Epbf.nu[30:39]+Ebsm.nu[30:39]-Eexp.nu[30:39])
+Tmsfr.nu<-c()
+Tmsfr.nu[30:39]<-Epbf.nu[30:39]+Ebsm.nu[30:39]-Eexp.nu[30:39]+int.nu[30:39]+Tmsfr.u[30:39]-Edbft.nu[30:39]-Esbft.nu[30:39]
+
+```
+#### IRR for Q2(a)
+Using uniroot function can find out the IRR make the net present value of cashflow as 0
+```{r}
+EPV.pro.sig<-function(irr_1){
+  EPV.pro.sig<-sum(Tmsfr.nu[30:39]/(1+irr_1)^(1:10))
+  return(EPV.pro.sig)
+}
+uniroot(EPV.pro.sig,c(0,1))
+```
+The IRR is given by 47.38%
+
+#### (b)
+###### unit fund
+The sum insured is $20000.
+Maintenance expenses change to become $75 p.a. initially, inflating at 25% p.a.
+$Insurance\,charges=1.2q_x^d*SI$
+```{r}
+si<-20000
+ic<-c()
+ic[30:39]<-1.2*qd[30:39]*si
+ic[30:39]
+```
+The Invested premium $IP_t=P_t - Premium\,based\,fees - Buy/Sell\,margins-Insurance\,charges$
+```{r}
+IP.in<-c()
+IP.in[30:39]<-prems[30:39]-pbf[30:39]-bsm[30:39]-ic[30:39]
+IP.in[30:39]
+```
+The value of units at the end of year
+```{r}
+VU.in<-c()
+for (j in 30:39) {
+  VU.in[30]<-IP.in[30]*(1+i)*(1-m)
+  VU.in[j]<-(VU.in[j-1]+IP.in[j])*(1+i)*(1-m)
+}
+VU.in[30:39]
+```
+Expected Amounts per Initial Policy for the Unit Fund
+$Expected\,Invested\,Premium(EIP_t)=IP_t\frac{(al)_{29+t}}{(al)_{30}}$
+```{r}
+EIP.u.in<-c()
+EIP.u.in[30:39]<-IP.in[30:39]*al.x[30:39]/al.x[30]
+EIP.u.in[30:39]
+```
+$Expected\,Value\,of\,Units(EVU_t)=VU_t\frac{(al)_{30+t}}{(al)_{30}}$
+```{r}
+EVU.u.in<-c()
+EVU.u.in[30:39]<-VU.in[30:39]*al.x[31:40]/al.x[30]
+EVU.u.in[30:39]
+```
+Expected interest at year t is $i*(EVU_{t-1}+EIP_t)$
+```{r}
+int.u.in<-c()
+int.u.in[30:39]<-c(i*EIP.u.in[30],i*(EVU.u.in[30:38]+EIP.u.in[31:39]))
+int.u.in[30:39]
+```
+
+The funds transfered to the Non-unit Fund in year 1 are $EIP_1+Interst_1-EVU_1$
+The funds transfered to the Non-unit Fund in later years are $EVU_{t-1}+EIP_t+Interst_t-EVU_t$
+```{r}
+Tmsfr.t.nu.in<-c()
+for (j in 31:39) {
+  Tmsfr.t.nu.in[30]<-EIP.u.in[30]+int.u.in[30]-EVU.u.in[30]
+  Tmsfr.t.nu.in[j]<-EVU.u.in[j-1]+EIP.u.in[j]+int.u.in[j]-EVU.u.in[j]
+}
+Tmsfr.t.nu.in[30:39]
+```
+
+```{r}
+UFtable_2 <- cbind(t,IP.in[30:39],VU.in[30:39],EIP.u.in[30:39],int.u.in[30:39],EVU.u.in[30:39],Tmsfr.t.nu.in[30:39])
+colnames(UFtable_2) <- c("year","invested premium","value of units", "expected invested premium","expected interest","expected value of units","transfer")
+UFtable_2
+```
+##### non-unit fund
+The initial expense rate is 45%, the maintenance expense in year 1 is $75, and the inflation is 25%.
+For year 1, the initial expenses at the beginnig of year are $5000*45\%+75$.
+The later expenses at the beginning of year are $75*(1+25\%)^{t-1}$ p.a.
+```{r}
+exp.in<-c()
+exp.in[30:39]<-c(prems[30]*0.45+75,75*1.25^(t[2:10]-1))
+exp.in[30:39]
+```
+death benefit is calculated by $Death\,Benefits=VU_t+SI$
+```{r}
+dbft.in<-c()
+dbft.in[30:39]<-VU.in[30:39]+si
+dbft.in[30:39]
+```
+$Surrender\,Benefits=VU_t$
+```{r}
+sbft.in<-c()
+sbft.in[30:39]<-VU.in[30:39]
+sbft.in[30:39]
+```
+Expected premium-based fee for the Non-unit Fund
+$Expected\,premium\,based\,fees=premium\,based\,fees\,\frac{(al)_{29+t}}{(al)_{30}}$
+```{r}
+Epbf.nu<-c()
+Epbf.nu[30:39]<-pbf[30:39]*al.x[30:39]/al.x[30]
+Epbf.nu[30:39]
+```
+expected buy/sell margin 
+$Expected\,Buy\,Sell\,margins=Buy\,Sell\,margins\,\frac{(al)_{29+t}}{(al)_{30}}$
+```{r}
+Ebsm.nu<-c()
+Ebsm.nu[30:39]<-bsm[30:39]*al.x[30:39]/al.x[30]
+Ebsm.nu[30:39]
+```
+
+Expected cashflow for the Non-unit Fund
+$Expected\,Insurance\,Charges=Insurance\,Charges\,\frac{(al)_{29+t}}{(al)_{30}}$
+```{r}
+Eic.nu<-c()
+Eic.nu[30:39]<-ic[30:39]*al.x[30:39]/al.x[30]
+Eic.nu[30:39]
+```
+$Expected\,Expenses=Expenses\,\frac{(al)_{29+t}}{(al)_{30}}$
+```{r}
+Eexp.in.nu<-c()
+Eexp.in.nu[30:39]<-exp.in[30:39]*al.x[30:39]/al.x[30]
+Eexp.in.nu[30:39]
+```
+$Expected\,Death\,Benefits=Death\,Benefits\,\frac{(ad)_{29+t}^d}{(al)_{30}}$
+```{r}
+Ed.bft.in.nu<-c()
+Ed.bft.in.nu[30:39]<-dbft.in[30:39]*ad.x.d[30:39]/al.x[30]
+Ed.bft.in.nu[30:39]
+```
+$Expected\,Surrender\,Benefits=Surrender\,Benefits\,\frac{(ad)_{29+t}^w}{(al)_{30}}$
+```{r}
+Es.bft.in.nu<-c()
+Es.bft.in.nu[30:39]<-sbft.in[30:39]*ad.x.w[30:39]/al.x[30]
+Es.bft.in.nu[30:39]
+```
+The Non-unit fund earning rate is 8%.
+calculate the expected interest using
+$Expected\,interest=i*(Expected\,premium\,based\,fees+Expected\,Buy\,Sell\,margins+Expected\,Insurance\,Charges-Expected\,Expenses)$
+```{r}
+i.in.nu<-0.08
+int.in.nu<-c()
+int.in.nu[30:39]<-i.in.nu*(Epbf.nu[30:39]+Ebsm.nu[30:39]+Eic.nu[30:39]-Eexp.in.nu[30:39])
+int.in.nu[30:39]
+```
+The transfers are $Expected\,premium\,based\,fees+Expected\,Buy\,Sell\,margins+Expected\,Insurance\,Charges-Expected\,Expenses+Expected\,Interest+Expected\,transfer\,from\,Unit\,Fund-Expected\,death\,benefits-Expected\,surrender\,benefits$
+The profit signature is  
+```{r}
+Transfer.in<-c()
+Transfer.in[30:39]<-Epbf.nu[30:39]+Ebsm.nu[30:39]+Eic.nu[30:39]-Eexp.in.nu[30:39]+int.in.nu[30:39]+Tmsfr.t.nu.in[30:39]-Ed.bft.in.nu[30:39]-Es.bft.in.nu[30:39]
+Transfer.in[30:39]
+```
+
+```{r}
+nUFtable_2 <- cbind(t,pbf[30:39],bsm[30:39],exp[30:39],ic[30:39],dbft.in[30:39],sbft.in[30:39])
+colnames(nUFtable_2) <- c("year","premium based fee","buy sell margin", "expense","insuraance charge", "death benefit","surr benefit")
+nUFtable_2
+```
+expected amount per initial policy
+The table is the non-unit fund cashflow after multiply by the probability.
+```{r}
+nUFtable_2 <- cbind(t,Epbf.nu[30:39],Ebsm.nu[30:39],Eic.nu[30:39],Eexp.in.nu[30:39],int.in.nu[30:39],Tmsfr.t.nu.in[30:39],Ed.bft.in.nu[30:39],Es.bft.in.nu[30:39],Transfer.in[30:39])
+colnames(nUFtable_2) <- c("year","expected premium based fee","expected buy sell margin", "insur charge","expected expense","expected interest","Trnsfr ufund", "death bft", "surr bft", "transfer")
+nUFtable_2
+```
+
+The expected present value of transfer at 12.5% iscalculated by 
+$EPV=\sum_{t=1}^{10}(1+12.5\%)^{-t}\,Transfer_t$
+```{r}
+EPV.Transfer.in<-sum(1.125^(-t)*Transfer.in[30:39])
+EPV.Transfer.in
+```
+The profit measure is $\frac{PV\,of\,transfers\,at\,12.5\%}{First\,year\,premium}$
+```{r}
+prob.in<-EPV.Transfer.in/prems[30]
+prob.in
+```
+The yield on transfers $irr_3$ is the rate that makes $EPV=\sum_{t=1}^{10}(1+y)^{-t}\,Transfer_t=0$
+```{r}
+EPV.pro.sig.in<-function(irr_3){
+  EPV.pro.sig.in<-sum(Transfer.in[30:39]/(1+irr_3)^(1:10))
+  return(EPV.pro.sig.in)
+}
+uniroot(EPV.pro.sig.in,c(-2,2))
+```
+So the IRR is given by -192.41%.The negative IRR is the sum of post-investment cash flows is less than the initial investment; i.e. the non-discounted cash flows add up to a value which is less than the investment.
